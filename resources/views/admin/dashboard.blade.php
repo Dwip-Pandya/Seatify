@@ -63,6 +63,8 @@
     @include('admin.components.footer')
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- https://docs.google.com/spreadsheets/d/1hVnIvpQrYEHDl2kuzlWQkoCevCIsZrSOaaAG8hq2zpQ/edit?usp=sharing -->
 </body>
 
 </html>
