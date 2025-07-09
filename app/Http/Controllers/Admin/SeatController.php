@@ -107,8 +107,9 @@ class SeatController extends Controller
             ->where('seat_id', $id)
             ->exists();
 
-        // Check if seat is currently blocked
-        $isBlocked = Seat::where('seat_id', $id)
+        // Check if seat is currently blocked (in tbl_blocked_seats, and within last 5 minutes)
+        $isBlocked = DB::table('tbl_blocked_seats')
+            ->where('seat_id', $id)
             ->where('blocked_at', '>', now()->subMinutes(5))
             ->exists();
 
@@ -119,13 +120,5 @@ class SeatController extends Controller
         $seat->delete();
 
         return redirect()->route('admin.seats.index')->with('success', 'Seat deleted successfully!');
-    }
-
-
-    // show: not needed, but could be used to see details
-    public function show($id)
-    {
-        $seat = Seat::findOrFail($id);
-        return view('admin.seats.show', compact('seat'));
     }
 }

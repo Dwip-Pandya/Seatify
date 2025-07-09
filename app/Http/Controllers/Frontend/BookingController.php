@@ -30,8 +30,6 @@ class BookingController extends Controller
             ->where('tbl_bookings.event_id', $event_id)
             ->pluck('seat_id')->toArray();
 
-        $unavailableSeatIds = array_merge($blockedSeatIds, $bookedSeatIds);
-
         $seats = Seat::where('event_id', $event_id)->get();
 
         return view('frontend.booking', [
@@ -48,7 +46,7 @@ class BookingController extends Controller
         $seatIds = array_filter(explode(',', $seatInput));
         $seats = Seat::whereIn('seat_id', $seatIds)->get();
 
-        if (empty($seatIds) || count($seatIds) == 0) {
+        if (empty($seatIds)) {
             return redirect()->back()->with('error', 'No seats selected.');
         }
 
@@ -58,43 +56,10 @@ class BookingController extends Controller
         $paymentSuccess = rand(0, 1) == 1;
 
         if ($paymentSuccess) {
-            // success code (same as before)
-            $booking = Booking::create([
-                'user_id' => Auth::id() ?? 0,
-                'event_id' => $event_id,
-                'booking_date' => now(),
-                'total_amount' => $totalAmount,
-                'payment_status' => 'success',
-            ]);
-
-            foreach ($seatIds as $seatId) {
-                DB::table('tbl_booking_seats')->insert([
-                    'booking_id' => $booking->booking_id,
-                    'seat_id' => $seatId,
-                ]);
-            }
-
-            // Generate PDF
-            $pdf = Pdf::loadView('frontend.pdf', compact('booking'));
-            $pdfPath = 'pdf/bookings/booking_' . $booking->booking_id . '.pdf';
-            $pdf->save(public_path($pdfPath));
-
-            $booking->pdf_path = $pdfPath;
-            $booking->save();
-
-            return view('frontend.confirmation', ['booking' => $booking, 'isRetry' => false]);
+            return $this->finalizeBooking($seatIds, $event_id, $totalAmount, false);
         } else {
-            // ❗ Block the selected seats for 5 minutes
-            foreach ($seatIds as $seatId) {
-                DB::table('tbl_blocked_seats')->insert([
-                    'user_id' => Auth::id() ?? 0,
-                    'seat_id' => $seatId,
-                    'event_id' => $event_id,
-                    'blocked_at' => now(),
-                ]);
-            }
+            // ❗ REMOVE old blocking-after-payment-fail logic
 
-            // Show payment failed page with retry button
             return view('frontend.payment_failed', [
                 'event_id' => $event_id,
                 'selectedSeats' => implode(',', $seatIds),
@@ -103,7 +68,6 @@ class BookingController extends Controller
             ]);
         }
     }
-
 
     public function retryBooking(Request $request, $event_id)
     {
@@ -155,5 +119,19 @@ class BookingController extends Controller
             'booking' => $booking,
             'isRetry' => $isRetry
         ]);
+    }
+
+    // ✅ NEW: Block seat when selected (via AJAX)
+    public function blockSeat(Request $request)
+    {
+        $seatId = $request->input('seat_id');
+        $eventId = $request->input('event_id');
+
+        BlockedSeat::updateOrInsert(
+            ['seat_id' => $seatId, 'event_id' => $eventId],
+            ['blocked_at' => now(), 'user_id' => Auth::id() ?? 0]
+        );
+
+        return response()->json(['status' => 'success']);
     }
 }

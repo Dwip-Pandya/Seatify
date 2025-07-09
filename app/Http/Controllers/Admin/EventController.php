@@ -16,7 +16,7 @@ class EventController extends Controller
         // Get the last 4 events with their details
         $latestEvents = Event::withCount('seats')
             ->orderBy('created_at', 'desc')
-            ->take(4)
+            ->take(5)
             ->get();
 
         return view('admin.dashboard', compact('totalEvents', 'latestEvents'));

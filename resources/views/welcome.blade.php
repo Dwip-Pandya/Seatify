@@ -82,55 +82,38 @@
             <div class="row">
                 <div class="col-lg-8 mx-auto">
                     <div id="eventCarousel" class="carousel slide" data-bs-ride="carousel">
+
+                        {{-- Carousel indicators --}}
                         <div class="carousel-indicators">
-                            <button type="button" data-bs-target="#eventCarousel" data-bs-slide-to="0" class="active"></button>
-                            <button type="button" data-bs-target="#eventCarousel" data-bs-slide-to="1"></button>
-                            <button type="button" data-bs-target="#eventCarousel" data-bs-slide-to="2"></button>
+                            @foreach($events as $index => $event)
+                            <button type="button"
+                                data-bs-target="#eventCarousel"
+                                data-bs-slide-to="{{ $index }}"
+                                @if($index===0) class="active" @endif>
+                            </button>
+                            @endforeach
                         </div>
+
                         <div class="carousel-inner">
-                            <div class="carousel-item active">
+                            @foreach($events as $index => $event)
+                            <div class="carousel-item @if($index === 0) active @endif">
                                 <div class="event-card">
-                                    <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" class="event-image" alt="Music Concert">
+                                    <img src="{{ $event->image ?? 'https://via.placeholder.com/1000x600?text=Event+Image' }}"
+                                        class="event-image"
+                                        alt="{{ $event->name }}">
                                     <div class="event-content">
-                                        <h3>Summer Music Festival</h3>
-                                        <p>Join us for an unforgettable night of live music featuring top artists from around the world.</p>
+                                        <h3>{{ $event->name }}</h3>
+                                        <p>{{ $event->description }}</p>
                                         <div class="event-meta">
-                                            <span><i class="fas fa-calendar"></i> July 15, 2025</span>
-                                            <span><i class="fas fa-map-marker-alt"></i> Central Park</span>
+                                            <span><i class="fas fa-calendar"></i> {{ \Carbon\Carbon::parse($event->start_date)->format('F d, Y') }}</span>
                                         </div>
-                                        <a href="#" class="btn btn-primary">View Details</a>
+                                        <a href="{{ route('frontend.events.show', $event->event_id) }}" class="btn btn-primary">View Details</a>
                                     </div>
                                 </div>
                             </div>
-                            <div class="carousel-item">
-                                <div class="event-card">
-                                    <img src="https://images.unsplash.com/photo-1505373877841-8d25f7d46678?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" class="event-image" alt="Tech Conference">
-                                    <div class="event-content">
-                                        <h3>Tech Innovation Summit</h3>
-                                        <p>Discover the latest trends in technology and network with industry leaders and innovators.</p>
-                                        <div class="event-meta">
-                                            <span><i class="fas fa-calendar"></i> July 22, 2025</span>
-                                            <span><i class="fas fa-map-marker-alt"></i> Convention Center</span>
-                                        </div>
-                                        <a href="#" class="btn btn-primary">View Details</a>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="carousel-item">
-                                <div class="event-card">
-                                    <img src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" class="event-image" alt="Art Exhibition">
-                                    <div class="event-content">
-                                        <h3>Modern Art Exhibition</h3>
-                                        <p>Explore contemporary masterpieces from renowned artists in this exclusive exhibition.</p>
-                                        <div class="event-meta">
-                                            <span><i class="fas fa-calendar"></i> July 30, 2025</span>
-                                            <span><i class="fas fa-map-marker-alt"></i> Art Gallery</span>
-                                        </div>
-                                        <a href="#" class="btn btn-primary">View Details</a>
-                                    </div>
-                                </div>
-                            </div>
+                            @endforeach
                         </div>
+
                         <button class="carousel-control-prev" type="button" data-bs-target="#eventCarousel" data-bs-slide="prev">
                             <span class="carousel-control-prev-icon"></span>
                         </button>
@@ -142,6 +125,7 @@
             </div>
         </div>
     </section>
+
 
     <!-- How It Works Section -->
     <section id="how-it-works" class="py-5">

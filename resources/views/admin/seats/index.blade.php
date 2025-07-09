@@ -35,22 +35,49 @@
                                     <th>Number</th>
                                     <th>Category</th>
                                     <th>Price</th>
+                                    <th>Status</th> {{-- NEW COLUMN --}}
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($event->seats as $seat)
+                                @php
+                                // Check if seat is booked
+                                $isBooked = DB::table('tbl_booking_seats')
+                                ->where('seat_id', $seat->seat_id)
+                                ->exists();
+
+                                // Check if temporarily blocked within last 5 min
+                                $isBlocked = DB::table('tbl_blocked_seats')
+                                ->where('seat_id', $seat->seat_id)
+                                ->where('blocked_at', '>', now()->subMinutes(5))
+                                ->exists();
+
+                                if ($isBooked) {
+                                $status = 'Booked';
+                                $badge = 'danger'; // red
+                                } elseif ($isBlocked) {
+                                $status = 'Temporarily Blocked';
+                                $badge = 'primary'; // blue
+                                } else {
+                                $status = 'Available';
+                                $badge = 'success'; // green
+                                }
+                                @endphp
                                 <tr>
                                     <td>{{ $seat->row }}</td>
                                     <td>{{ $seat->number }}</td>
                                     <td>{{ $seat->category }}</td>
                                     <td>₹{{ $seat->price }}</td>
                                     <td>
+                                        <span class="badge bg-{{ $badge }}">{{ $status }}</span>
+                                    </td>
+                                    <td>
                                         <a href="{{ route('admin.seats.edit', $seat->seat_id) }}" class="btn btn-sm btn-warning">Edit</a>
-                                        <form action="{{ route('admin.seats.destroy', $seat->seat_id) }}" method="POST" style="display:inline;">
+                                        <form action="{{ route('admin.seats.destroy', $seat->seat_id) }}" method="POST" style="display:inline;" class="delete-seat-form" data-status="{{ $status }}">
                                             @csrf
                                             @method('DELETE')
-                                            <button onclick="return confirm('Are you sure?')" class="btn btn-sm btn-danger">Delete</button>
+                                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                                         </form>
                                     </td>
                                 </tr>
@@ -71,6 +98,24 @@
     @include('admin.components.footer')
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const deleteForms = document.querySelectorAll('.delete-seat-form');
+            deleteForms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    const status = form.getAttribute('data-status');
+                    if (status !== 'Available') {
+                        e.preventDefault(); // stop form submit
+                        alert('Seat Cannot be deleted: this seat is ' + status.toLowerCase() + '.');
+                    } else {
+                        if (!confirm('Are you sure you want to delete this seat?')) {
+                            e.preventDefault();
+                        }
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 
 </html>

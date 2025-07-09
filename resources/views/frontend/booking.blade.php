@@ -94,9 +94,11 @@
         total = 0;
       document.querySelectorAll('.seat').forEach(seat => {
         seat.addEventListener('click', () => {
-          if (seat.classList.contains('booked')) return;
+          if (seat.classList.contains('booked') || seat.classList.contains('blocked')) return;
+
           const id = seat.dataset.seatId;
           const price = parseFloat(seat.dataset.price);
+
           if (seat.classList.contains('selected')) {
             seat.classList.remove('selected');
             selected = selected.filter(s => s != id);
@@ -105,7 +107,28 @@
             seat.classList.add('selected');
             selected.push(id);
             total += price;
+
+            // ✅ Block seat in backend immediately
+            fetch('{{ route("frontend.booking.block") }}', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                  seat_id: id,
+                  event_id: '{{ $event->event_id }}'
+                })
+              })
+              .then(response => response.json())
+              .then(data => {
+                if (data.status !== 'success') {
+                  console.error('Failed to block seat.');
+                }
+              })
+              .catch(error => console.error('Error:', error));
           }
+
           document.getElementById('selectedSeats').value = selected.join(',');
           document.getElementById('selectedCount').innerText = selected.length;
           document.getElementById('totalPrice').innerText = total.toFixed(2);
@@ -113,6 +136,7 @@
       });
     });
   </script>
+
 </body>
 
 </html>
